@@ -1,10 +1,9 @@
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define MAX 100
 
-/* Structure for passenger booking details */
 struct Booking {
     int bookingID;
     char passengerName[50];
@@ -17,14 +16,16 @@ struct Booking {
     float ticketPrice;
 };
 
-/* Global variables */
 struct Booking bookings[MAX];
 int count = 0;
 int nextID = 1001;
 
-/* Function declarations */
 void readLine(char message[], char text[], int size);
 int readInt(char message[], int min, int max);
+
+void readName(char message[], char name[], int size);
+void readGender(char gender[]);
+void readDate(char date[]);
 
 void selectDestination(char destination[]);
 float calculateFare(const char destination[], const char seatClass[]);
@@ -46,9 +47,6 @@ void generateReport(void);
 
 void saveToFile(void);
 void loadFromFile(void);
-
-
-/* STUDENT 1: INPUT FUNCTIONS */
 
 void readLine(char message[], char text[], int size) {
     printf("%s", message);
@@ -88,8 +86,155 @@ int readInt(char message[], int min, int max) {
     }
 }
 
+/* Validate passenger name: alphabets and spaces only */
 
-/* STUDENT 2: MAIN MENU AND BOOKING */
+void readName(char message[], char name[], int size) {
+    int i, valid, hasLetter;
+
+    while (1) {
+        readLine(message, name, size);
+
+        valid = 1;
+        hasLetter = 0;
+
+        for (i = 0; name[i] != '\0'; i++) {
+
+            if ((name[i] >= 'A' && name[i] <= 'Z') ||
+                (name[i] >= 'a' && name[i] <= 'z')) {
+
+                hasLetter = 1;
+            }
+            else if (name[i] != ' ') {
+                valid = 0;
+                break;
+            }
+        }
+
+        if (valid == 1 && hasLetter == 1) {
+            break;
+        }
+
+        printf("Invalid name! Enter alphabets only.\n");
+    }
+}
+
+/* Validate gender */
+
+void readGender(char gender[]) {
+    int i;
+
+    while (1) {
+        readLine("Enter gender (Male/Female/Other): ",
+                 gender, 15);
+
+        /* Convert input to lowercase */
+        for (i = 0; gender[i] != '\0'; i++) {
+            if (gender[i] >= 'A' && gender[i] <= 'Z') {
+                gender[i] = gender[i] + 32;
+            }
+        }
+
+        if (strcmp(gender, "male") == 0) {
+            strcpy(gender, "Male");
+            break;
+        }
+        else if (strcmp(gender, "female") == 0) {
+            strcpy(gender, "Female");
+            break;
+        }
+        else if (strcmp(gender, "other") == 0) {
+            strcpy(gender, "Other");
+            break;
+        }
+
+        printf("Invalid gender! Enter Male, Female or Other.\n");
+    }
+}
+/* Validate flight date starting from 01/11/2026 */
+
+void readDate(char date[]) {
+    int day, month, year;
+    int i, days;
+
+    int currentDay = 1;
+    int currentMonth = 11;
+    int currentYear = 2026;
+
+    while (1) {
+        readLine("Enter flight date (DD/MM/YYYY): ",
+                 date, 20);
+
+        if (strlen(date) != 10 ||
+            date[2] != '/' || date[5] != '/') {
+
+            printf("Invalid date format! Use DD/MM/YYYY.\n");
+            continue;
+        }
+
+        /* Check that all other characters are digits */
+        for (i = 0; i < 10; i++) {
+            if (i != 2 && i != 5) {
+                if (date[i] < '0' || date[i] > '9') {
+                    break;
+                }
+            }
+        }
+
+        if (i != 10) {
+            printf("Enter numbers only!\n");
+            continue;
+        }
+
+        /* Extract day, month and year */
+        day = (date[0] - '0') * 10 + date[1] - '0';
+
+        month = (date[3] - '0') * 10 + date[4] - '0';
+
+        year = (date[6] - '0') * 1000 +
+               (date[7] - '0') * 100 +
+               (date[8] - '0') * 10 +
+               date[9] - '0';
+
+        if (month < 1 || month > 12 || year < 2026) {
+            printf("Invalid month or year!\n");
+            continue;
+        }
+
+        /* Check number of days in the month */
+        if (month == 2) {
+            days = 28;
+
+            if (year % 400 == 0 ||
+                (year % 4 == 0 && year % 100 != 0)) {
+                days = 29;
+            }
+        }
+        else if (month == 4 || month == 6 ||
+                 month == 9 || month == 11) {
+            days = 30;
+        }
+        else {
+            days = 31;
+        }
+
+        if (day < 1 || day > days) {
+            printf("Invalid day!\n");
+            continue;
+        }
+
+        /* Reject dates before 01/11/2026 */
+        if (year < currentYear ||
+            (year == currentYear && month < currentMonth) ||
+            (year == currentYear && month == currentMonth &&
+             day < currentDay)) {
+
+            printf("Past date not allowed! Starting date is 01/11/2026.\n");
+            continue;
+        }
+
+        break;
+    }
+}
 
 int main(void) {
     int choice;
@@ -132,6 +277,7 @@ int main(void) {
 
 
 /* Select destination */
+
 void selectDestination(char destination[]) {
     int choice;
 
@@ -153,6 +299,7 @@ void selectDestination(char destination[]) {
 
 
 /* Calculate base fare according to destination and seat class */
+
 float calculateFare(const char destination[], const char seatClass[]) {
     if (strcmp(destination, "Dubai") == 0) {
         if (strcmp(seatClass, "Economy") == 0) return 30000;
@@ -181,6 +328,7 @@ float calculateFare(const char destination[], const char seatClass[]) {
 
 /* Add 20% to the base fare during vacation months:
    December, January, June and July. */
+
 float calculateBookingPrice(const char destination[],
                             const char seatClass[],
                             const char flightDate[]) {
@@ -200,6 +348,7 @@ float calculateBookingPrice(const char destination[],
 
 
 /* Select ticket class using structure pointer */
+
 void selectClass(struct Booking *b) {
     int choice;
 
@@ -226,6 +375,7 @@ void selectClass(struct Booking *b) {
 
 
 /* Add new booking */
+
 void bookTicket(void) {
     struct Booking b;
 
@@ -237,38 +387,19 @@ void bookTicket(void) {
     printf("\n========== BOOK A TICKET ==========\n");
     b.bookingID = nextID++;
 
-    readLine("Enter passenger name: ",
+    readName("Enter passenger name: ",
              b.passengerName, sizeof(b.passengerName));
-
-    if (strlen(b.passengerName) == 0) {
-        printf("Passenger name cannot be empty!\n");
-        nextID--;
-        return;
-    }
 
     b.age = readInt("Enter age: ", 1, 120);
 
-    readLine("Enter gender: ", b.gender, sizeof(b.gender));
-
-    if (strlen(b.gender) == 0) {
-        printf("Gender cannot be empty!\n");
-        nextID--;
-        return;
-    }
+    readGender(b.gender);
 
     strcpy(b.source, "Pakistan");
     printf("\nDeparture Country: Pakistan\n");
 
     selectDestination(b.destination);
 
-    readLine("Enter flight date (DD/MM/YYYY): ",
-             b.flightDate, sizeof(b.flightDate));
-
-    if (strlen(b.flightDate) == 0) {
-        printf("Flight date cannot be empty!\n");
-        nextID--;
-        return;
-    }
+    readDate(b.flightDate);
 
     selectClass(&b);
 
@@ -280,9 +411,6 @@ void bookTicket(void) {
     printf("\nTicket booked successfully!\n");
     printf("Your Booking ID is: %d\n", b.bookingID);
 }
-
-
-/* STUDENT 3: DISPLAY, SEARCH, UPDATE AND DELETE */
 
 void displayBookings(void) {
     int i;
@@ -345,6 +473,7 @@ void searchBooking(void) {
 
 
 /* Update booking */
+
 void updateBooking(void) {
     int id, index, choice;
 
@@ -370,11 +499,8 @@ void updateBooking(void) {
 
         switch (choice) {
             case 1:
-                readLine("Enter new name: ",
+                readName("Enter new name: ",
                          bookings[index].passengerName, 50);
-                if (strlen(bookings[index].passengerName) == 0) {
-                    printf("Name cannot be empty!\n");
-                }
                 break;
 
             case 2:
@@ -383,11 +509,7 @@ void updateBooking(void) {
                 break;
 
             case 3:
-                readLine("Enter new gender: ",
-                         bookings[index].gender, 15);
-                if (strlen(bookings[index].gender) == 0) {
-                    printf("Gender cannot be empty!\n");
-                }
+                readGender(bookings[index].gender);
                 break;
 
             case 4:
@@ -403,20 +525,16 @@ void updateBooking(void) {
                 break;
 
             case 5:
-                readLine("Enter new flight date: ",
-                         bookings[index].flightDate, 20);
-                if (strlen(bookings[index].flightDate) == 0) {
-                    printf("Flight date cannot be empty!\n");
-                }
-                else {
-                    bookings[index].ticketPrice = calculateBookingPrice(
-                        bookings[index].destination,
-                        bookings[index].seatClass,
-                        bookings[index].flightDate
-                    );
-                    printf("New Ticket Price: Rs. %.2f\n",
-                           bookings[index].ticketPrice);
-                }
+                readDate(bookings[index].flightDate);
+
+                bookings[index].ticketPrice = calculateBookingPrice(
+                    bookings[index].destination,
+                    bookings[index].seatClass,
+                    bookings[index].flightDate
+                );
+
+                printf("New Ticket Price: Rs. %.2f\n",
+                       bookings[index].ticketPrice);
                 break;
 
             case 6:
@@ -435,6 +553,7 @@ void updateBooking(void) {
 
 
 /* Delete or cancel booking */
+
 void cancelBooking(void) {
     int id, index, i;
 
@@ -456,8 +575,6 @@ void cancelBooking(void) {
     printf("\nBooking cancelled successfully!\n");
 }
 
-
-/* STUDENT 4: SORTING AND REPORTS */
 
 void sortBookings(void) {
     int i, j;
